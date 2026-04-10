@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from 'next/navigation'
 import { analyzeDocument } from '@/lib/api'
 import { uploadStore } from '@/lib/upload-store'
 import type { AnalysisResult } from '@/lib/types'
+import Link from 'next/link'
 import { RiskBadge } from '@/components/report/RiskBadge'
 import { CategoryCard } from '@/components/report/CategoryCard'
 import { SummaryPanel } from '@/components/report/SummaryPanel'
@@ -74,9 +75,9 @@ export default function ReportPage() {
       <main className="min-h-screen flex flex-col items-center justify-center px-6 gap-4">
         <p className="text-[var(--color-risk-high)] font-medium">Analysis failed</p>
         <p className="text-sm text-[var(--color-text)]/60">{errorMsg}</p>
-        <a href="/" className="text-sm text-[var(--color-primary)] underline">
+        <Link href="/" className="text-sm text-[var(--color-primary)] underline">
           Try again
-        </a>
+        </Link>
       </main>
     )
   }
@@ -91,9 +92,9 @@ export default function ReportPage() {
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
-            <a href="/" className="text-[var(--color-primary)] font-bold text-lg">
+            <Link href="/" className="text-[var(--color-primary)] font-bold text-lg">
               Terver
-            </a>
+            </Link>
             <span className="text-[var(--color-text)]/30">/</span>
             <span className="text-sm text-[var(--color-text)]/60 truncate max-w-[200px]">
               {fileName}
