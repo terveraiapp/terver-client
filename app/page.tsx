@@ -16,7 +16,7 @@ interface QueuedFile {
 }
 
 function statusLabel(status: FileStatus) {
-  if (status === 'waiting') return { text: 'Waiting…', color: 'text-[var(--color-text)]/40' }
+  if (status === 'waiting') return { text: 'Uploading…', color: 'text-[var(--color-text)]/40' }
   if (status === 'analysing') return { text: 'Analysing…', color: 'text-[var(--color-accent)]' }
   if (status === 'done') return { text: 'Done', color: 'text-green-600' }
   return { text: 'Failed', color: 'text-[var(--color-risk-high)]' }
@@ -28,6 +28,10 @@ export default function LandingPage() {
 
   const updateFile = useCallback((id: string, patch: Partial<QueuedFile>) => {
     setQueue((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)))
+  }, [])
+
+  const removeFile = useCallback((id: string) => {
+    setQueue((prev) => prev.filter((f) => f.id !== id))
   }, [])
 
   const runQueue = useCallback(async (items: QueuedFile[]) => {
@@ -65,10 +69,8 @@ export default function LandingPage() {
       status: 'waiting',
     }))
     setQueue((prev) => {
-      const updated = [...prev, ...newItems]
-      // start processing only the newly added items
       runQueue(newItems)
-      return updated
+      return [...prev, ...newItems]
     })
   }, [runQueue])
 
@@ -97,17 +99,21 @@ export default function LandingPage() {
           <div className="w-full flex flex-col gap-2">
             {queue.map((item) => {
               const { text, color } = statusLabel(item.status)
+              const canRemove = item.status !== 'analysing'
               return (
                 <div
                   key={item.id}
                   className="flex items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
                 >
+                  {/* Left: spinner + filename */}
                   <div className="flex items-center gap-2 min-w-0">
                     {item.status === 'analysing' && (
                       <span className="shrink-0 w-4 h-4 border-2 border-[var(--color-accent)] border-t-transparent rounded-full animate-spin" />
                     )}
                     <span className="truncate text-[var(--color-text)] font-medium">{item.file.name}</span>
                   </div>
+
+                  {/* Right: status + view report + remove */}
                   <div className="shrink-0 flex items-center gap-3">
                     <span className={`text-xs ${color}`}>{text}</span>
                     {item.status === 'done' && item.sessionId && (
@@ -122,19 +128,21 @@ export default function LandingPage() {
                     {item.status === 'error' && item.error && (
                       <span className="text-xs text-[var(--color-risk-high)]">{item.error}</span>
                     )}
+                    {canRemove && (
+                      <button
+                        onClick={() => removeFile(item.id)}
+                        aria-label="Remove file"
+                        className="w-5 h-5 rounded-full bg-[var(--color-text)]/10 hover:bg-[var(--color-text)]/20 flex items-center justify-center transition-colors"
+                      >
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                          <path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                        </svg>
+                      </button>
+                    )}
                   </div>
                 </div>
               )
             })}
-
-            {allDone && (
-              <button
-                onClick={() => setQueue([])}
-                className="mt-1 text-xs text-[var(--color-text)]/40 hover:text-[var(--color-text)]/70 transition-colors text-center w-full"
-              >
-                Clear queue and upload more
-              </button>
-            )}
           </div>
         )}
 
