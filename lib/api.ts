@@ -22,6 +22,27 @@ export async function* analyzeDocument(
   yield* readSSEStream<AnalysisStreamEvent>(response)
 }
 
+export async function* analyzeCase(
+  files: File[]
+): AsyncGenerator<AnalysisStreamEvent> {
+  const formData = new FormData()
+  for (const file of files) {
+    formData.append('files', file)
+  }
+
+  const response = await fetch(`${BASE_URL}/analyze-case`, {
+    method: 'POST',
+    body: formData,
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Upload failed' }))
+    throw new Error(error.detail || `Error ${response.status}`)
+  }
+
+  yield* readSSEStream<AnalysisStreamEvent>(response)
+}
+
 export async function* chatWithAmberlyn(
   sessionId: string,
   message: string,

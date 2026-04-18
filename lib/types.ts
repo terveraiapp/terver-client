@@ -12,6 +12,9 @@ export interface AnalysisResult {
   overall_score: number
   categories: CategoryFinding[]
   summary: string
+  // Case analysis extras (present when is_case=true)
+  documents_identified?: string[]
+  cross_document_issues?: string[]
 }
 
 export interface AnalysisStreamEvent {

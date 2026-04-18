@@ -138,6 +138,28 @@ export default function ReportPage() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6 items-start">
           {/* Left — Report */}
           <div className="flex flex-col gap-4">
+            {/* Case-only: documents identified + cross-document issues */}
+            {result.documents_identified && result.documents_identified.length > 0 && (
+              <div className="rounded-xl border border-[var(--color-border)] bg-white p-4 flex flex-col gap-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]/40">Documents in this case</p>
+                <ul className="flex flex-col gap-1">
+                  {result.documents_identified.map((doc, i) => (
+                    <li key={i} className="text-sm text-[var(--color-text)]/70">📄 {doc}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {result.cross_document_issues && result.cross_document_issues.length > 0 && (
+              <div className="rounded-xl border border-[var(--color-risk-high)]/30 bg-[var(--color-risk-high)]/5 p-4 flex flex-col gap-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-risk-high)]">Cross-document issues</p>
+                <ul className="flex flex-col gap-1.5">
+                  {result.cross_document_issues.map((issue, i) => (
+                    <li key={i} className="text-sm text-[var(--color-text)]/80">⚠ {issue}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {result.categories.map((cat) => (
                 <CategoryCard key={cat.name} category={cat} />
