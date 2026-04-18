@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useRef, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { DropZone } from '@/components/upload/DropZone'
 import { analyzeDocument, analyzeCase } from '@/lib/api'
@@ -147,10 +148,10 @@ export default function LandingPage() {
     processingRef.current = true
     for (const item of items) {
       updateFile(item.id, { status: 'analysing' })
-      uploadStore.pendingFile = item.file
       try {
         for await (const event of analyzeDocument(item.file)) {
           if (event.type === 'session' && event.session_id) {
+            uploadStore.set(event.session_id, { files: [item.file], isCase: false })
             updateFile(item.id, { status: 'done', sessionId: event.session_id })
             break
           }
@@ -174,6 +175,7 @@ export default function LandingPage() {
     try {
       for await (const event of analyzeCase(items.map(i => i.file))) {
         if (event.type === 'session' && event.session_id) {
+          uploadStore.set(event.session_id, { files: items.map(i => i.file), isCase: true })
           items.forEach(item => updateFile(item.id, { status: 'done', sessionId: event.session_id }))
           break
         }
@@ -212,7 +214,6 @@ export default function LandingPage() {
     if (files.length === 1) {
       const item: QueuedFile = { id: crypto.randomUUID(), file: files[0], status: 'waiting' }
       setQueue(prev => [...prev, item])
-      uploadStore.pendingFile = files[0]
       runSeparate([item])
     } else {
       setPending(files)
@@ -230,8 +231,15 @@ export default function LandingPage() {
 
         {/* Logo */}
         <div className="flex flex-col items-center gap-3">
-          <div className="w-14 h-14 rounded-xl bg-[var(--color-primary)] flex items-center justify-center">
-            <span className="text-[var(--color-accent)] text-2xl font-bold">T</span>
+          <div className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center bg-[var(--color-primary)] shrink-0">
+            <Image
+              src="/terver-logo.png"
+              alt="Terver"
+              width={64}
+              height={64}
+              className="w-full h-full object-cover object-center"
+              priority
+            />
           </div>
           <h1 className="text-4xl font-bold tracking-tight text-[var(--color-primary)]">Terver</h1>
           <p className="text-base text-[var(--color-text)]/60 text-center">Know what you own.</p>
@@ -261,7 +269,7 @@ export default function LandingPage() {
                       </span>
                       {caseSuccess && caseSessionId && (
                         <Link
-                          href={`/report/${caseSessionId}?file=Case+Report`}
+                          href={`/report/${caseSessionId}?file=Case+Report&case=true`}
                           target="_blank"
                           className="text-sm font-bold text-[var(--color-primary)] hover:underline whitespace-nowrap"
                         >
@@ -314,7 +322,7 @@ export default function LandingPage() {
                             {item.status === 'error' && item.error && (
                               <span className="text-xs text-[var(--color-risk-high)] max-w-[120px] truncate">{item.error}</span>
                             )}
-                            {canRemove && (
+                            {(canRemove || (isCase && item.status !== 'analysing')) && (
                               <button
                                 onClick={() => removeFile(item.id)}
                                 aria-label="Remove file"

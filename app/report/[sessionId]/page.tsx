@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
-import { analyzeDocument } from '@/lib/api'
+import { analyzeDocument, analyzeCase } from '@/lib/api'
 import { uploadStore } from '@/lib/upload-store'
 import type { AnalysisResult } from '@/lib/types'
 import Link from 'next/link'
@@ -47,6 +47,7 @@ export default function ReportPage() {
   const sessionId = params.sessionId as string
   const searchParams = useSearchParams()
   const fileName = searchParams.get('file') || 'document'
+  const isCase = searchParams.get('case') === 'true'
 
   const [pageState, setPageState] = useState<PageState>('analyzing')
   const [result, setResult] = useState<AnalysisResult | null>(null)
@@ -55,14 +56,18 @@ export default function ReportPage() {
   const loadingPhrase = useLoadingPhrase()
 
   useEffect(() => {
-    const file = uploadStore.pendingFile
-    if (!file || hasStarted.current) return
+    const entry = uploadStore.get(sessionId)
+    if (!entry || hasStarted.current) return
     hasStarted.current = true
 
     ;(async () => {
       try {
         let rawJson = ''
-        for await (const event of analyzeDocument(file)) {
+        const stream = entry.isCase
+          ? analyzeCase(entry.files)
+          : analyzeDocument(entry.files[0])
+
+        for await (const event of stream) {
           if (event.type === 'token' && event.token) {
             rawJson += event.token
           }
@@ -76,20 +81,20 @@ export default function ReportPage() {
         const parsed: AnalysisResult = JSON.parse(rawJson)
         setResult(parsed)
         setPageState('done')
-        uploadStore.pendingFile = null
+        uploadStore.delete(sessionId)
       } catch (err: unknown) {
         setErrorMsg(err instanceof Error ? err.message : 'Analysis failed.')
         setPageState('error')
       }
     })()
-  }, [])
+  }, [sessionId])
 
   if (pageState === 'analyzing') {
     return (
       <main className="min-h-screen flex flex-col items-center justify-center px-6 gap-5">
         <div className="w-10 h-10 border-4 border-[var(--color-primary)] border-t-[var(--color-accent)] rounded-full animate-spin" />
         <div className="flex flex-col items-center gap-1">
-          <p className="text-sm font-medium text-[var(--color-text)]/70">Analysing document…</p>
+          <p className="text-sm font-medium text-[var(--color-text)]/70">{isCase ? 'Analysing case…' : 'Analysing document…'}</p>
           <p
             key={loadingPhrase}
             className="text-xs text-[var(--color-text)]/40 animate-pulse transition-all duration-500"
