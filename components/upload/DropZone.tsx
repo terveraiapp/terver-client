@@ -2,51 +2,62 @@
 
 import { useCallback, useState } from 'react'
 
-const ACCEPTED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp']
+const ACCEPTED_MIME_TYPES = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]
+
 const MAX_SIZE_MB = 100
 
 interface DropZoneProps {
-  onFile: (file: File) => void
+  onFiles: (files: File[]) => void
   disabled?: boolean
 }
 
-export function DropZone({ onFile, disabled }: DropZoneProps) {
+function validateFile(file: File): string | null {
+  const mime = file.type ||
+    (file.name.endsWith('.docx')
+      ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      : file.name.endsWith('.doc')
+      ? 'application/msword'
+      : '')
+
+  if (!ACCEPTED_MIME_TYPES.includes(mime)) {
+    return `${file.name}: unsupported type. Accepted: PDF, JPG, PNG, WEBP, DOC, DOCX.`
+  }
+  if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+    return `${file.name}: exceeds ${MAX_SIZE_MB}MB limit.`
+  }
+  return null
+}
+
+export function DropZone({ onFiles, disabled }: DropZoneProps) {
   const [dragOver, setDragOver] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const validate = (file: File): string | null => {
-    if (!ACCEPTED_TYPES.includes(file.type)) {
-      return 'Unsupported file type. Please upload a PDF or image.'
-    }
-    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-      return `File too large. Maximum size is ${MAX_SIZE_MB}MB.`
-    }
-    return null
-  }
-
-  const handleFile = useCallback(
-    (file: File) => {
-      const err = validate(file)
-      if (err) {
-        setError(err)
+  const handleFiles = useCallback(
+    (rawFiles: FileList | null) => {
+      if (!rawFiles || rawFiles.length === 0) return
+      const files = Array.from(rawFiles)
+      const errors = files.map(validateFile).filter(Boolean)
+      if (errors.length > 0) {
+        setError(errors[0]!)
         return
       }
       setError(null)
-      onFile(file)
+      onFiles(files)
     },
-    [onFile]
+    [onFiles]
   )
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setDragOver(false)
-    const file = e.dataTransfer.files[0]
-    if (file) handleFile(file)
-  }
-
-  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) handleFile(file)
+    handleFiles(e.dataTransfer.files)
   }
 
   return (
@@ -59,31 +70,31 @@ export function DropZone({ onFile, disabled }: DropZoneProps) {
             : 'border-[var(--color-border)] hover:border-[var(--color-primary)] hover:bg-[var(--color-primary)]/5',
           disabled ? 'opacity-50 cursor-not-allowed' : '',
         ].join(' ')}
-        onDragOver={(e) => {
-          e.preventDefault()
-          setDragOver(true)
-        }}
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
         onDragLeave={() => setDragOver(false)}
         onDrop={onDrop}
       >
         <input
           type="file"
           className="hidden"
-          accept=".pdf,.jpg,.jpeg,.png,.webp"
-          onChange={onChange}
+          accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx"
+          multiple
+          onChange={(e) => handleFiles(e.target.files)}
           disabled={disabled}
         />
         <div className="flex flex-col items-center gap-3 pointer-events-none px-6 text-center">
           <div className="text-4xl">📄</div>
           <p className="text-sm font-medium text-[var(--color-primary)]">
-            Drop your property document here
+            Drop your property documents here
           </p>
-          <p className="text-xs text-[var(--color-text)]/50">PDF, JPG, PNG, WEBP — up to 100MB</p>
+          <p className="text-xs text-[var(--color-text)]/50">
+            PDF, JPG, PNG, WEBP, DOC, DOCX — up to 100MB each — multiple files supported
+          </p>
         </div>
       </label>
-      {error !== null ? (
+      {error !== null && (
         <p className="mt-2 text-sm text-[var(--color-risk-high)] text-center">{error}</p>
-      ) : null}
+      )}
     </div>
   )
 }
