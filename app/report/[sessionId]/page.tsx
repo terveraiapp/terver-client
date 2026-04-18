@@ -20,7 +20,6 @@ export default function ReportPage() {
   const fileName = searchParams.get('file') || 'document'
 
   const [pageState, setPageState] = useState<PageState>('analyzing')
-  const [streamedTokens, setStreamedTokens] = useState('')
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
   const hasStarted = useRef(false)
@@ -36,7 +35,6 @@ export default function ReportPage() {
         for await (const event of analyzeDocument(file)) {
           if (event.type === 'token' && event.token) {
             rawJson += event.token
-            setStreamedTokens(rawJson)
           }
           if (event.type === 'done' && event.raw) {
             rawJson = event.raw
@@ -61,11 +59,6 @@ export default function ReportPage() {
       <main className="min-h-screen flex flex-col items-center justify-center px-6 gap-6">
         <div className="w-10 h-10 border-4 border-[var(--color-primary)] border-t-[var(--color-accent)] rounded-full animate-spin" />
         <p className="text-sm font-medium text-[var(--color-text)]/70">Analysing document…</p>
-        {streamedTokens.length > 0 ? (
-          <pre className="max-w-xl w-full text-xs text-[var(--color-text)]/40 bg-white border border-[var(--color-border)] rounded-xl p-4 overflow-auto max-h-48 font-mono">
-            {streamedTokens}
-          </pre>
-        ) : null}
       </main>
     )
   }
