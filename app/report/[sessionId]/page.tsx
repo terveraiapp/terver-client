@@ -11,6 +11,35 @@ import { CategoryCard } from '@/components/report/CategoryCard'
 import { SummaryPanel } from '@/components/report/SummaryPanel'
 import { ChatPanel } from '@/components/chat/ChatPanel'
 
+const LOADING_PHRASES = [
+  'Reading title chain…',
+  'Checking ownership integrity…',
+  'Scanning for fraud indicators…',
+  'Verifying registration status…',
+  'Inspecting boundary descriptions…',
+  'Cross-referencing survey numbers…',
+  'Checking for encumbrances…',
+  'Reviewing execution clauses…',
+  'Validating grantor & grantee details…',
+  'Analysing stamp duty references…',
+  'Looking for double-sale markers…',
+  'Checking Land Commission records…',
+  'Reviewing conveyance dates…',
+  'Assessing document completeness…',
+  'Finalising risk assessment…',
+]
+
+function useLoadingPhrase() {
+  const [index, setIndex] = useState(0)
+  useEffect(() => {
+    const id = setInterval(() => {
+      setIndex((i) => (i + 1) % LOADING_PHRASES.length)
+    }, 2800)
+    return () => clearInterval(id)
+  }, [])
+  return LOADING_PHRASES[index]
+}
+
 type PageState = 'analyzing' | 'done' | 'error'
 
 export default function ReportPage() {
@@ -23,6 +52,7 @@ export default function ReportPage() {
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
   const hasStarted = useRef(false)
+  const loadingPhrase = useLoadingPhrase()
 
   useEffect(() => {
     const file = uploadStore.pendingFile
@@ -56,9 +86,17 @@ export default function ReportPage() {
 
   if (pageState === 'analyzing') {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center px-6 gap-6">
+      <main className="min-h-screen flex flex-col items-center justify-center px-6 gap-5">
         <div className="w-10 h-10 border-4 border-[var(--color-primary)] border-t-[var(--color-accent)] rounded-full animate-spin" />
-        <p className="text-sm font-medium text-[var(--color-text)]/70">Analysing document…</p>
+        <div className="flex flex-col items-center gap-1">
+          <p className="text-sm font-medium text-[var(--color-text)]/70">Analysing document…</p>
+          <p
+            key={loadingPhrase}
+            className="text-xs text-[var(--color-text)]/40 animate-pulse transition-all duration-500"
+          >
+            {loadingPhrase}
+          </p>
+        </div>
       </main>
     )
   }
