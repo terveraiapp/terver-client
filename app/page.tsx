@@ -230,18 +230,17 @@ export default function LandingPage() {
       <div className="w-full max-w-xl flex flex-col items-center gap-10">
 
         {/* Logo */}
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center bg-[var(--color-primary)] shrink-0">
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-24 h-24 rounded-full overflow-hidden flex items-center justify-center bg-white shrink-0 shadow-sm">
             <Image
               src="/terver-logo.png"
               alt="Terver"
-              width={64}
-              height={64}
+              width={96}
+              height={96}
               className="w-full h-full object-cover object-center"
               priority
             />
           </div>
-          <h1 className="text-4xl font-bold tracking-tight text-[var(--color-primary)]">Terver</h1>
           <p className="text-base text-[var(--color-text)]/60 text-center">Know what you own.</p>
         </div>
 

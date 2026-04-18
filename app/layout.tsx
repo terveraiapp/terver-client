@@ -7,10 +7,6 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Terver — Know what you own.',
   description: 'AI-powered land document verification for Africa.',
-  icons: {
-    icon: '/terver-logo.png',
-    apple: '/terver-logo.png',
-  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
