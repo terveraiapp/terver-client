@@ -13,7 +13,7 @@ class UploadStore {
     this.sessions.set(sessionId, entry)
     if (entry.result) {
       try {
-        sessionStorage.setItem(`terver_result_${sessionId}`, JSON.stringify(entry.result))
+        localStorage.setItem(`terver_result_${sessionId}`, JSON.stringify(entry.result))
       } catch {}
     }
   }
@@ -22,12 +22,12 @@ class UploadStore {
     return this.sessions.get(sessionId)
   }
 
-  // Works across tab boundaries by falling back to sessionStorage
+  // Works across tab boundaries by falling back to localStorage
   getResult(sessionId: string): AnalysisResult | null {
     const entry = this.sessions.get(sessionId)
     if (entry?.result) return entry.result
     try {
-      const raw = sessionStorage.getItem(`terver_result_${sessionId}`)
+      const raw = localStorage.getItem(`terver_result_${sessionId}`)
       if (raw) return JSON.parse(raw) as AnalysisResult
     } catch {}
     return null
@@ -35,7 +35,7 @@ class UploadStore {
 
   delete(sessionId: string) {
     this.sessions.delete(sessionId)
-    try { sessionStorage.removeItem(`terver_result_${sessionId}`) } catch {}
+    try { localStorage.removeItem(`terver_result_${sessionId}`) } catch {}
   }
 }
 
