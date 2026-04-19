@@ -98,9 +98,6 @@ export async function generatePDF(result: AnalysisResult, documentName: string) 
     // Logo: white circle background then logo image
     const logoSize = 22, logoX = ML, logoY = (HEADER_H - logoSize) / 2
     if (logoBase64) {
-      // White circle behind logo so it blends cleanly on dark bg
-      doc.setFillColor(255, 255, 255)
-      doc.circle(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2 + 0.5, 'F')
       doc.addImage(logoBase64, 'PNG', logoX, logoY, logoSize, logoSize)
     }
 
@@ -137,7 +134,7 @@ export async function generatePDF(result: AnalysisResult, documentName: string) 
     doc.setFontSize(7)
     doc.setFont('helvetica', 'normal')
     ink(C_SUBTEXT)
-    doc.text('Terver - AI Land Verification', ML, H - 8.5)
+    doc.text('Terver', ML, H - 8.5)
     doc.text('terverai.vercel.app', W / 2, H - 8.5, { align: 'center' })
     doc.text(`Page ${p}`, W - MR, H - 8.5, { align: 'right' })
   }
