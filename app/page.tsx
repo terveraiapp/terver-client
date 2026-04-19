@@ -149,13 +149,25 @@ export default function LandingPage() {
     for (const item of items) {
       updateFile(item.id, { status: 'analysing' })
       try {
+        let sid: string | undefined
+        let rawJson = ''
         for await (const event of analyzeDocument(item.file)) {
           if (event.type === 'session' && event.session_id) {
-            uploadStore.set(event.session_id, { files: [item.file], isCase: false })
-            updateFile(item.id, { status: 'done', sessionId: event.session_id })
+            sid = event.session_id
+            uploadStore.set(sid, { files: [item.file], isCase: false })
+          } else if (event.type === 'token' && event.token) {
+            rawJson += event.token
+          } else if (event.type === 'done') {
+            if (event.raw) rawJson = event.raw
+            if (sid) {
+              try {
+                const result = JSON.parse(rawJson)
+                uploadStore.set(sid, { files: [item.file], isCase: false, result })
+              } catch { /* malformed JSON — report page will show error */ }
+              updateFile(item.id, { status: 'done', sessionId: sid })
+            }
             break
-          }
-          if (event.type === 'error') {
+          } else if (event.type === 'error') {
             updateFile(item.id, { status: 'error', error: event.message })
             break
           }
@@ -173,13 +185,26 @@ export default function LandingPage() {
     processingRef.current = true
     items.forEach(item => updateFile(item.id, { status: 'analysing' }))
     try {
-      for await (const event of analyzeCase(items.map(i => i.file))) {
+      let sid: string | undefined
+      let rawJson = ''
+      const files = items.map(i => i.file)
+      for await (const event of analyzeCase(files)) {
         if (event.type === 'session' && event.session_id) {
-          uploadStore.set(event.session_id, { files: items.map(i => i.file), isCase: true })
-          items.forEach(item => updateFile(item.id, { status: 'done', sessionId: event.session_id }))
+          sid = event.session_id
+          uploadStore.set(sid, { files, isCase: true })
+        } else if (event.type === 'token' && event.token) {
+          rawJson += event.token
+        } else if (event.type === 'done') {
+          if (event.raw) rawJson = event.raw
+          if (sid) {
+            try {
+              const result = JSON.parse(rawJson)
+              uploadStore.set(sid, { files, isCase: true, result })
+            } catch { /* malformed JSON — report page will show error */ }
+            items.forEach(item => updateFile(item.id, { status: 'done', sessionId: sid }))
+          }
           break
-        }
-        if (event.type === 'error') {
+        } else if (event.type === 'error') {
           items.forEach(item => updateFile(item.id, { status: 'error', error: event.message }))
           break
         }

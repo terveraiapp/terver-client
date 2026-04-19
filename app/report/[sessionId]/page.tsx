@@ -60,6 +60,15 @@ export default function ReportPage() {
     if (!entry || hasStarted.current) return
     hasStarted.current = true
 
+    // Fast path: result already computed in the queue — render instantly, no second API call
+    if (entry.result) {
+      setResult(entry.result)
+      setPageState('done')
+      uploadStore.delete(sessionId)
+      return
+    }
+
+    // Fallback: result missing (e.g. page was hard-refreshed and store was cleared)
     ;(async () => {
       try {
         let rawJson = ''
@@ -68,15 +77,9 @@ export default function ReportPage() {
           : analyzeDocument(entry.files[0])
 
         for await (const event of stream) {
-          if (event.type === 'token' && event.token) {
-            rawJson += event.token
-          }
-          if (event.type === 'done' && event.raw) {
-            rawJson = event.raw
-          }
-          if (event.type === 'error') {
-            throw new Error(event.message || 'Analysis error')
-          }
+          if (event.type === 'token' && event.token) rawJson += event.token
+          if (event.type === 'done' && event.raw) rawJson = event.raw
+          if (event.type === 'error') throw new Error(event.message || 'Analysis error')
         }
         const parsed: AnalysisResult = JSON.parse(rawJson)
         setResult(parsed)

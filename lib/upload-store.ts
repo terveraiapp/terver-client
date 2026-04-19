@@ -1,6 +1,9 @@
+import type { AnalysisResult } from './types'
+
 interface SessionEntry {
   files: File[]
   isCase: boolean
+  result?: AnalysisResult  // stored once analysis completes — report page reads this directly
 }
 
 class UploadStore {
