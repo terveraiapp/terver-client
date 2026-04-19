@@ -56,19 +56,26 @@ export default function ReportPage() {
   const loadingPhrase = useLoadingPhrase()
 
   useEffect(() => {
-    const entry = uploadStore.get(sessionId)
-    if (!entry || hasStarted.current) return
+    if (hasStarted.current) return
     hasStarted.current = true
 
-    // Fast path: result already computed in the queue — render instantly, no second API call
-    if (entry.result) {
-      setResult(entry.result)
+    // Fast path: result in memory or sessionStorage (survives new-tab navigation)
+    const cached = uploadStore.getResult(sessionId)
+    if (cached) {
+      setResult(cached)
       setPageState('done')
       uploadStore.delete(sessionId)
       return
     }
 
-    // Fallback: result missing (e.g. page was hard-refreshed and store was cleared)
+    // Fallback: File objects available (same-tab hard-refresh edge case)
+    const entry = uploadStore.get(sessionId)
+    if (!entry) {
+      setErrorMsg('Session expired. Please upload your documents again.')
+      setPageState('error')
+      return
+    }
+
     ;(async () => {
       try {
         let rawJson = ''
