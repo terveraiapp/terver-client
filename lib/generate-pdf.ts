@@ -134,7 +134,7 @@ export async function generatePDF(result: AnalysisResult, documentName: string) 
     doc.setFontSize(7)
     doc.setFont('helvetica', 'normal')
     ink(C_SUBTEXT)
-    doc.text('Terver', ML, H - 8.5)
+    doc.text('Terver - Know What You Own', ML, H - 8.5)
     doc.text('terverai.vercel.app', W / 2, H - 8.5, { align: 'center' })
     doc.text(`Page ${p}`, W - MR, H - 8.5, { align: 'right' })
   }
